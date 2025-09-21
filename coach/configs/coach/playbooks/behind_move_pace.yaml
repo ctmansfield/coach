@@ -1,0 +1,6 @@
+# Behind move pace — template
+noon_threshold_pct: 35
+evening_threshold_pct: 65
+interventions:
+  - "7-min walk after next block"
+  - "Protein-forward snack"

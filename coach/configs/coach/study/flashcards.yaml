@@ -1,0 +1,8 @@
+# Flashcards — template
+deck:
+  - id: "bio-urea-cycle-1"
+    q: "Rate-limiting step of urea cycle?"
+    a: "Carbamoyl phosphate synthetase I (in mitochondria); requires N-acetylglutamate."
+  - id: "biochem-pyruvate-1"
+    q: "Fates of pyruvate (3)?"
+    a: "Alanine (ALT), oxaloacetate (pyruvate carboxylase), acetyl‑CoA (PDH)."

@@ -1,0 +1,16 @@
+# Risk/Impairment scoring weights — template
+weights:
+  base: 10
+  meal_timing_penalty_per_min: 0.15
+  meal_timing_cap: 30
+  fasting_penalty_step_hours: 4.5
+  fasting_penalty_max: 20
+  slump_penalty_max: 15
+  sleep_hygiene_penalty_max: 15
+  supp_timing_penalty_max: 20
+  mitigation_max: 20
+bands:
+  low: [0, 24]
+  moderate: [25, 49]
+  high: [50, 74]
+  critical: [75, 100]

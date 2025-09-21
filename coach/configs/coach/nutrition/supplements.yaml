@@ -1,0 +1,17 @@
+# Supplements & meds timing rules — template (non-dosing)
+items:
+  - name: "iron"
+    with_food: false
+    avoid_with:
+      - "calcium"
+    separation_minutes: 120
+  - name: "calcium"
+    with_food: true
+    avoid_with:
+      - "iron"
+    separation_minutes: 120
+  - name: "magnesium glycinate"
+    with_food: true
+    preferred_time: "evening"
+  - name: "caffeine"
+    latest_time: "14:00"

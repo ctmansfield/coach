@@ -1,0 +1,10 @@
+# Nutrition targets — template
+meal_windows:
+  breakfast_after_wake_minutes: 60
+  lunch_window: ["11:30", "13:30"]
+  snack_afternoon: ["15:30", "16:30"]
+  dinner_to_bed_buffer_minutes: 150
+caffeine:
+  cutoff: "14:00"
+snack_rules:
+  protein_forward: true

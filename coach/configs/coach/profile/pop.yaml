@@ -1,0 +1,18 @@
+# Personal Operating Profile (POP) — template
+identity:
+  name: "Chad"
+preferences:
+  tone: "calm, factual, time-anchored, no cheerleading"
+  watch_first: true
+  echo_device: "bedroom_echo"   # set to actual entity name or 'none'
+  quiet_hours: "22:30-07:30"
+  escalation_minutes: [10, 20]
+health_constraints:
+  # Non-dosing, behavioral guidance only.
+  adverse_reactions:
+    - opioids
+    - gabapentin
+    - antidepressants
+study:
+  max_cards_per_block: 2
+  intervals_days: [1, 3, 7, 14, 30]

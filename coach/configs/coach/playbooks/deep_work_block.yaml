@@ -1,0 +1,8 @@
+# Deep work block playbook — template
+duration_minutes: 45
+end_ritual:
+  - "Save work, quick summary"
+  - "Stand up, water, 60s breathing"
+  - "Prepare next context"
+switch_help:
+  message: "It's {time}. Block complete. Switch to: {next_task}."

@@ -1,0 +1,6 @@
+# Morning boot playbook — template
+steps:
+  - "Water + light exposure within 15 min of wake"
+  - "Meds as scheduled (with/without food per rules)"
+  - "Breakfast within 60 min of wake"
+  - "Plan first deep-work block start time"
