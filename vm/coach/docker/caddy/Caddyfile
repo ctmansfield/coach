@@ -1,0 +1,28 @@
+{
+}
+
+:80 {
+  encode gzip
+  redir https://{host}{uri}
+}
+
+(common) {
+  encode gzip
+
+  handle_path /ha/* {
+    reverse_proxy http://homeassistant:8123
+  }
+
+  handle_path /flows/* {
+    reverse_proxy http://nodered:1880
+  }
+
+  handle_path /ns/* {
+    respond "coach-vm is alive (https)" 200
+  }
+}
+
+
+localhost, coach-vm.lab.lan, coach.lab.lan, ha.lab.lan, flows.lab.lan, 192.168.122.22 {
+  import common
+}

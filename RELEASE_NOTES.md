@@ -12,8 +12,8 @@
 - Install & Verify instructions
 
 **Next planned patch (v0.2.x):**
-- Packer/cloud‑init manifest for the VM image
-- Docker Compose for HA, Node‑RED, proxy, Nightscout/xDrip path
-- Minimal Rules Engine skeleton and event schema
-- Basic RAG service stub and patient‑facing proxy
-- Operational VERIFY steps (watch cue, Alexa whisper, synthetic CGM spike)
+- Functionality-first minimal flow (Node-RED + HA mobile app notification)
+- Event schema and operational VERIFY docs
+- Rules Engine skeleton plan
+- Nightscout/xDrip placeholder
+- Hardening (compose/networking, secrets) deferred per decision

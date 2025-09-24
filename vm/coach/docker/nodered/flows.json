@@ -1,0 +1,160 @@
+[
+  {
+    "id": "tab1",
+    "type": "tab",
+    "label": "Coach Minimal",
+    "disabled": false,
+    "info": "Minimal flow: HTTP ingest -> risk/message -> HA notify via REST."
+  },
+  {
+    "id": "http_in_events",
+    "type": "http in",
+    "z": "tab1",
+    "name": "Ingest Events",
+    "url": "/events",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 140,
+    "y": 120,
+    "wires": [["json_parse"]]
+  },
+  {
+    "id": "json_parse",
+    "type": "json",
+    "z": "tab1",
+    "name": "Parse JSON",
+    "property": "payload",
+    "action": "obj",
+    "pretty": false,
+    "x": 340,
+    "y": 120,
+    "wires": [["fn_risk_msg"]]
+  },
+  {
+    "id": "fn_risk_msg",
+    "type": "function",
+    "z": "tab1",
+    "name": "Risk + Message",
+    "func": "// Very simple, explicit scoring and message
+var evt = msg.payload || {};
+var type = evt.type || "UNKNOWN";
+var risk = 0;
+var title = "Coach";
+var text = "";
+
+switch(type){
+  case 'CGM_SPIKE':
+    // Inputs: glucose, trend
+    var g = Number(evt.glucose||0);
+    var trend = evt.trend || 'unknown';
+    risk = (g >= 180 ? 20 : 10) + (trend === 'rising' ? 10 : 0);
+    text = `Glucose ${g} and ${trend}. Short walk + water?`;
+    break;
+  case 'MEAL_MISSED':
+    var minutes = Number(evt.minutes_late || 0);
+    risk = Math.min(30, minutes * 0.2);
+    text = `Meal is ${minutes} min late. Quick protein snack or start meal window?`;
+    break;
+  case 'TIMEBOX_END':
+    var nextTask = evt.next_task || 'next block';
+    text = `Block complete. Switch to: ${nextTask}.`;
+    risk = 5;
+    break;
+  default:
+    text = `Event: ${type}`;
+}
+
+msg.ha = {
+  title: title,
+  message: text,
+  data: { tag: 'coach', importance: 'high' }
+};
+
+// Prepare HA REST call
+msg.headers = {
+  'Authorization': 'Bearer ' + (env.get('HA_TOKEN')||'changeme'),
+  'Content-Type': 'application/json'
+};
+var base = env.get('HA_BASE_URL') || 'http://homeassistant:8123';
+var svc  = env.get('HA_NOTIFY_SERVICE') || 'notify.mobile_app_your_device';
+var svcPath = String(svc).replace(/^notify\./,'');
+msg.url = `${base}/api/services/notify/${svcPath}`;
+msg.method = 'POST';
+msg.payload = msg.ha;
+return msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 560,
+    "y": 120,
+    "wires": [["ha_post","http_resp_ok"]]
+  },
+  {
+    "id": "ha_post",
+    "type": "http request",
+    "z": "tab1",
+    "name": "HA notify REST",
+    "method": "use",
+    "ret": "txt",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "authType": "",
+    "senderr": false,
+    "x": 790,
+    "y": 100,
+    "wires": [["debug_resp"]]
+  },
+  {
+    "id": "http_resp_ok",
+    "type": "http response",
+    "z": "tab1",
+    "name": "200 OK",
+    "statusCode": "200",
+    "headers": {},
+    "x": 790,
+    "y": 150,
+    "wires": []
+  },
+  {
+    "id": "debug_resp",
+    "type": "debug",
+    "z": "tab1",
+    "name": "HA resp",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 990,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "inject_cgm",
+    "type": "inject",
+    "z": "tab1",
+    "name": "Synthetic CGM Spike",
+    "props": [
+      {"p":"payload"}
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"type\":\"CGM_SPIKE\",\"glucose\":190,\"trend\":\"rising\"}",
+    "payloadType": "json",
+    "x": 200,
+    "y": 200,
+    "wires": [["fn_risk_msg"]]
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {"id":"tab2","type":"tab","label":"Nightscout Poll","disabled":false,"info":"Poll Nightscout every 1m and forward CGM events to /events logic."},
+  {"id":"inj1","type":"inject","z":"tab2","name":"Every 1 min","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"60","crontab":"","once":true,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":130,"y":80,"wires":[["http_ns"]]},
+  {"id":"http_ns","type":"http request","z":"tab2","name":"GET latest entry","method":"GET","ret":"obj","paytoqs":"ignore","url":"http://nightscout:1337/api/v1/entries.json?count=1","persist":false,"authType":"","senderr":false,"x":330,"y":80,"wires":[["fn_map"]]},
+  {"id":"fn_map","type":"function","z":"tab2","name":"Map to CGM event","func":"var entries = msg.payload || [];
+if (!Array.isArray(entries) || entries.length === 0) return null;
+var e = entries[0];
+var sgv = Number(e.sgv||0);
+var dir = (e.direction||'').toLowerCase();
+var trend = 'flat';
+if (dir.includes('up')) trend = 'rising';
+if (dir.includes('down')) trend = 'falling';
+
+var ev = { type: 'CGM_SPIKE', glucose: sgv, trend: trend };
+msg.headers = { 'Content-Type': 'application/json' };
+msg.method = 'POST';
+msg.url = 'http://nodered:1880/events';
+msg.payload = ev;
+return msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":540,"y":80,"wires":[["http_post_evt"]]},
+  {"id":"http_post_evt","type":"http request","z":"tab2","name":"POST /events","method":"use","ret":"txt","paytoqs":"ignore","url":"","tls":"","persist":false,"proxy":"","authType":"","senderr":false,"x":760,"y":80,"wires":[["dbg"]]},
+  {"id":"dbg","type":"debug","z":"tab2","name":"Event -> 200?","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"statusCode","targetType":"msg","statusVal":"","statusType":"auto","x":960,"y":80,"wires":[]}
+]

@@ -1,0 +1,37 @@
+<network connections='2'>
+  <name>default</name>
+  <uuid>dd95ff15-ac4d-4e51-aa4f-87813e755d2b</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+
+  <bridge name='virbr0' stp='on' delay='0'/>
+  <mac address='52:54:00:b0:e2:00'/>
+
+  <!-- Local split-horizon zone served only to this libvirt network -->
+  <domain name='lab.lan' localOnly='yes'/>
+
+  <dns>
+    <!-- Static host entries (all point to coach-vm) -->
+    <host ip='192.168.122.22'>
+      <hostname>coach-vm</hostname>
+      <hostname>coach</hostname>
+      <hostname>ha</hostname>
+      <hostname>flows</hostname>
+      <hostname>coach-vm.lab.lan</hostname>
+      <hostname>coach.lab.lan</hostname>
+      <hostname>ha.lab.lan</hostname>
+      <hostname>flows.lab.lan</hostname>
+    </host>
+  </dns>
+
+  <ip address='192.168.122.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.122.2' end='192.168.122.254'/>
+      <!-- Static lease for coach-vm -->
+      <host mac='52:54:00:0f:12:4f' name='coach-vm' ip='192.168.122.22'/>
+    </dhcp>
+  </ip>
+</network>

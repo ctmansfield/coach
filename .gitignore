@@ -1,0 +1,10 @@
+/secrets/
+/srv/
+/backups/
+/tmp/
+/*.tar.gz
+*.env
+*.local
+/node_modules
+__pycache__/
+rules_engine/.venv/
