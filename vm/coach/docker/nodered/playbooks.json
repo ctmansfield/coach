@@ -1,143 +1,29 @@
 [
-  {
-    "id": "tab-coach-playbooks",
-    "type": "tab",
-    "label": "Coach Playbooks",
-    "disabled": false,
-    "info": "HTTP endpoints to trigger playbook nudges without changing existing flows. Uses HA_* env vars."
-  },
-  {
-    "id": "in-playbook-get",
-    "type": "http in",
-    "z": "tab-coach-playbooks",
-    "name": "GET /playbook/:name",
-    "url": "/playbook/:name",
-    "method": "get",
-    "upload": false,
-    "swaggerDoc": "",
-    "x": 150,
-    "y": 80,
-    "wires": [["fn-playbook-build"]]
-  },
-  {
-    "id": "in-playbook-post",
-    "type": "http in",
-    "z": "tab-coach-playbooks",
-    "name": "POST /playbook",
-    "url": "/playbook",
-    "method": "post",
-    "upload": false,
-    "swaggerDoc": "",
-    "x": 150,
-    "y": 140,
-    "wires": [["json-post","fn-playbook-build"]]
-  },
-  {
-    "id": "json-post",
-    "type": "json",
-    "z": "tab-coach-playbooks",
-    "name": "Parse JSON",
-    "property": "payload",
-    "action": "obj",
-    "pretty": false,
-    "x": 360,
-    "y": 140,
-    "wires": [["fn-playbook-build"]]
-  },
-  {
-    "id": "fn-playbook-build",
-    "type": "function",
-    "z": "tab-coach-playbooks",
-    "name": "Build HA request (playbook)",
-    "func": "// Read env\nconst token = env.get('HA_TOKEN');\nconst base = env.get('HA_BASE_URL') || 'http://homeassistant:8123';\nlet svc = env.get('HA_NOTIFY_SERVICE') || 'mobile_app_masterblaster';\nsvc = String(svc).replace(/^notify\./,''); // REST slug must not include 'notify.'\n\n// Determine playbook name\nlet name = ''\nif (msg.req && msg.req.params && msg.req.params.name) {\n  name = String(msg.req.params.name||'').toLowerCase();\n} else if (msg.payload && msg.payload.name) {\n  name = String(msg.payload.name||'').toLowerCase();\n}\n\n// Static map aligned with configs/coach/playbooks templates (no file IO)\nconst PB = {\n  morning_boot: {\n    title: 'Morning Boot',\n    steps: [\n      'Water + light exposure within 15 min of wake',\n      'Meds as scheduled (with/without food per rules)',\n      'Breakfast within 60 min of wake',\n      'Plan first deep-work block start time'\n    ]\n  },\n  deep_work_block: {\n    title: 'Deep Work – End Ritual',\n    steps: [\n      'Save work, quick summary',\n      'Stand up, water, 60s breathing',\n      'Prepare next context'\n    ]\n  },\n  bedtime_winddown: {\n    title: 'Bedtime Wind-down',\n    steps: [\n      'Dim lights',\n      'Breathing exercise 4-7-8 (2 min)',\n      'Set out morning clothes and pillbox'\n    ]\n  },\n  behind_move_pace: {\n    title: 'Behind Move Pace',\n    steps: [\n      '7-min walk after next block',\n      'Protein-forward snack'\n    ]\n  },\n  low_restful_sleep: {\n    title: 'Low Restful Sleep – Today',\n    steps: [\n      'Shorter work blocks (25 min)',\n      'No caffeine after 14:00',\n      'Wind-down lights at 21:15'\n    ]\n  }\n};\n\nif (!name || !PB[name]) {\n  // If unknown, return 404 and do not call HA\n  node.status({fill:'yellow',shape:'ring',text:'unknown playbook: ' + name});\n  if (msg.res) {\n    msg.statusCode = 404;\n    msg.payload = { ok:false, error:'unknown playbook', name:name };\n    return [null, msg, null];\n  } else {\n    return [null, null, null];\n  }\n}\n\nconst pb = PB[name];\nconst lines = pb.steps.join('\n• ');\n\n// Build HA request\nmsg.headers = {\n  Authorization: 'Bearer ' + token,\n  'Content-Type': 'application/json'\n};\nmsg.url = `${base}/api/services/notify/${svc}`;\nmsg.method = 'POST';\nmsg.payload = {\n  title: 'Coach – ' + pb.title,\n  message: '• ' + lines,\n  data: { tag: 'coach', importance: 'high' }\n};\n\n// Also prepare a JSON response body for the HTTP client\nconst response = { ok:true, name:name, title:pb.title, steps:pb.steps };\nmsg.playbook_response = response;\nreturn [msg, null, response];",
-    "outputs": 3,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 420,
-    "y": 100,
-    "wires": [["ha-playbook","dbg-playbook"],["out-404"],["out-200-json"]]
-  },
-  {
-    "id": "ha-playbook",
-    "type": "http request",
-    "z": "tab-coach-playbooks",
-    "name": "HA notify REST (playbook)",
-    "method": "use",
-    "ret": "txt",
-    "paytoqs": "ignore",
-    "url": "",
-    "tls": "",
-    "persist": false,
-    "proxy": "",
-    "authType": "",
-    "senderr": false,
-    "x": 760,
-    "y": 80,
-    "wires": [["dbg-ha-playbook","out-200-playbook"]]
-  },
-  {
-    "id": "out-200-playbook",
-    "type": "http response",
-    "z": "tab-coach-playbooks",
-    "name": "200 OK",
-    "statusCode": "200",
-    "headers": {},
-    "x": 990,
-    "y": 80,
-    "wires": []
-  },
-  {
-    "id": "out-404",
-    "type": "http response",
-    "z": "tab-coach-playbooks",
-    "name": "404 Unknown",
-    "statusCode": "404",
-    "headers": {},
-    "x": 640,
-    "y": 140,
-    "wires": []
-  },
-  {
-    "id": "out-200-json",
-    "type": "http response",
-    "z": "tab-coach-playbooks",
-    "name": "200 OK (JSON)",
-    "statusCode": "200",
-    "headers": {},
-    "x": 640,
-    "y": 200,
-    "wires": []
-  },
-  {
-    "id": "dbg-playbook",
-    "type": "debug",
-    "z": "tab-coach-playbooks",
-    "name": "Playbook req",
-    "active": true,
-    "tosidebar": true,
-    "console": false,
-    "tostatus": false,
-    "complete": "true",
-    "targetType": "full",
-    "x": 620,
-    "y": 100,
-    "wires": []
-  },
-  {
-    "id": "dbg-ha-playbook",
-    "type": "debug",
-    "z": "tab-coach-playbooks",
-    "name": "HA resp (playbook)",
-    "active": true,
-    "tosidebar": true,
-    "console": false,
-    "tostatus": false,
-    "complete": "true",
-    "targetType": "full",
-    "x": 980,
-    "y": 40,
-    "wires": []
-  }
+  {"id":"tab-coach-playbooks","type":"tab","label":"Coach Playbooks","disabled":false,"info":"HTTP endpoints to trigger playbook nudges without changing existing flows. Uses HA_* env vars. Reads YAML from /coach-configs/playbooks with fallback to static map."},
+
+  {"id":"in-playbook-get","type":"http in","z":"tab-coach-playbooks","name":"GET /playbook/:name","url":"/playbook/:name","method":"get","upload":false,"swaggerDoc":"","x":150,"y":60,"wires":[["fn-resolve"]]},
+  {"id":"in-playbook-post","type":"http in","z":"tab-coach-playbooks","name":"POST /playbook","url":"/playbook","method":"post","upload":false,"swaggerDoc":"","x":150,"y":100,"wires":[["json-post","fn-resolve"]]},
+  {"id":"json-post","type":"json","z":"tab-coach-playbooks","name":"Parse JSON","property":"payload","action":"obj","pretty":false,"x":360,"y":100,"wires":[["fn-resolve"]]},
+
+  {"id":"fn-resolve","type":"function","z":"tab-coach-playbooks","name":"Resolve name -> filename","func":"let name='';\nif (msg.req && msg.req.params && msg.req.params.name) { name = String(msg.req.params.name||''); }\nelse if (msg.payload && msg.payload.name) { name = String(msg.payload.name||''); }\nname = name.toLowerCase();\nmsg.pbname = name;\nmsg.filename = '/coach-configs/playbooks/' + name + '.yaml';\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":590,"y":80,"wires":[["file-read"]]},
+
+  {"id":"file-read","type":"file in","z":"tab-coach-playbooks","name":"Read YAML","filename":"","format":"utf8","chunk":false,"sendError":true,"encoding":"none","allProps":false,"x":800,"y":80,"wires":[["fn-parse-yaml-lite"]]},
+
+  {"id":"fn-parse-yaml-lite","type":"function","z":"tab-coach-playbooks","name":"YAML-lite -> steps","func":"// Very simple YAML list extractor for keys: steps, end_ritual, interventions, rules\n// Falls back to static map if no list found.\nconst text = String(msg.payload||'');\nconst lines = text.split(/\r?\n/);\nconst keys = ['steps','end_ritual','interventions','rules'];\nlet current=null; let indent=null; let items=[]; let title=null;\nfor (let i=0;i<lines.length;i++){\n  const line = lines[i];\n  const mKey = line.match(/^([ \t]*)([a-zA-Z_]+):\s*$/);\n  if (mKey){\n    const k = mKey[2];\n    if (keys.includes(k)) { current=k; indent=mKey[1].length; items=[]; continue; } else { current=null; indent=null; }\n  }\n  if (current){\n    const re = new RegExp('^' + ' '.repeat(indent+2) + '-\\s*(.*)$');\n    const mItem = line.match(re);\n    if (mItem){ items.push(mItem[1].replace(/^\"|\"$/g,'')); }\n    else { const mLess = line.match(new RegExp('^' + ' '.repeat(indent) + '[^ ]')); if (mLess) { break; } }\n  }\n}\nif (!items || items.length===0){ msg.parsed=null; } else { msg.parsed={title: msg.pbname.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()), steps: items}; }\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":1020,"y":80,"wires":[["switch-parsed"]]},
+
+  {"id":"switch-parsed","type":"switch","z":"tab-coach-playbooks","name":"Parsed?","property":"parsed","propertyType":"msg","rules":[{"t":"nnull"}],"checkall":"true","repair":false,"outputs":1,"x":1220,"y":80,"wires":[["fn-build-ha-from-parsed"]]},
+
+  {"id":"fn-build-ha-from-parsed","type":"function","z":"tab-coach-playbooks","name":"Build HA (parsed)","func":"const token = env.get('HA_TOKEN');\nconst base = env.get('HA_BASE_URL') || 'http://homeassistant:8123';\nlet svc = env.get('HA_NOTIFY_SERVICE') || 'mobile_app_masterblaster';\nsvc = String(svc).replace(/^notify\./,'');\nconst pb = msg.parsed;\nconst lines = '• ' + pb.steps.join('\\n• ');\nmsg.headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };\nmsg.url = `${base}/api/services/notify/${svc}`;\nmsg.method = 'POST';\nmsg.payload = { title: 'Coach – ' + pb.title, message: lines, data: { tag:'coach', importance:'high' } };\nmsg.playbook_response = { ok:true, name: msg.pbname, title: pb.title, steps: pb.steps };\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":1440,"y":80,"wires":[["ha-playbook","out-200-json","dbg-ha-playbook"]]},
+
+  {"id":"fn-static-fallback","type":"function","z":"tab-coach-playbooks","name":"Static fallback","func":"const PB={\n  morning_boot:{title:'Morning Boot',steps:['Water + light exposure within 15 min of wake','Meds as scheduled (with/without food per rules)','Breakfast within 60 min of wake','Plan first deep-work block start time']},\n  deep_work_block:{title:'Deep Work – End Ritual',steps:['Save work, quick summary','Stand up, water, 60s breathing','Prepare next context']},\n  bedtime_winddown:{title:'Bedtime Wind-down',steps:['Dim lights','Breathing exercise 4-7-8 (2 min)','Set out morning clothes and pillbox']},\n  behind_move_pace:{title:'Behind Move Pace',steps:['7-min walk after next block','Protein-forward snack']},\n  low_restful_sleep:{title:'Low Restful Sleep – Today',steps:['Shorter work blocks (25 min)','No caffeine after 14:00','Wind-down lights at 21:15']}\n};\nconst token = env.get('HA_TOKEN');\nconst base = env.get('HA_BASE_URL') || 'http://homeassistant:8123';\nlet svc = env.get('HA_NOTIFY_SERVICE') || 'mobile_app_masterblaster';\nsvc = String(svc).replace(/^notify\./,'');\nconst pb = PB[msg.pbname];\nif (!pb){ if (msg.res){ msg.statusCode=404; msg.payload={ok:false,error:'unknown playbook',name:msg.pbname}; return [null, msg, null]; } return [null,null,null]; }\nconst lines='• ' + pb.steps.join('\\n• ');\nmsg.headers={ Authorization:'Bearer '+token,'Content-Type':'application/json'};\nmsg.url = `${base}/api/services/notify/${svc}`;\nmsg.method='POST';\nmsg.payload={ title:'Coach – '+pb.title, message: lines, data:{tag:'coach',importance:'high'}};\nmsg.playbook_response={ ok:true, name:msg.pbname, title:pb.title, steps:pb.steps };\nreturn [msg, null, msg.playbook_response];","outputs":3,"noerr":0,"initialize":"","finalize":"","libs":[],"x":1040,"y":140,"wires":[["ha-playbook","dbg-ha-playbook"],["out-404"],["out-200-json"]]},
+
+  {"id":"catch-read-error","type":"catch","z":"tab-coach-playbooks","name":"Catch file errors","scope":["file-read"],"uncaught":false,"x":820,"y":140,"wires":[["fn-static-fallback"]]},
+  {"id":"status-no-parsed","type":"status","z":"tab-coach-playbooks","name":"No parsed -> fallback","scope":["switch-parsed"],"x":1230,"y":140,"wires":[["fn-static-fallback"]]},
+
+  {"id":"ha-playbook","type":"http request","z":"tab-coach-playbooks","name":"HA notify REST (playbook)","method":"use","ret":"txt","paytoqs":"ignore","url":"","tls":"","persist":false,"proxy":"","authType":"","senderr":false,"x":1680,"y":80,"wires":[["out-200-playbook"]]},
+  {"id":"out-200-playbook","type":"http response","z":"tab-coach-playbooks","name":"200 OK","statusCode":"200","headers":{},"x":1890,"y":80,"wires":[]},
+  {"id":"out-404","type":"http response","z":"tab-coach-playbooks","name":"404 Unknown","statusCode":"404","headers":{},"x":1260,"y":200,"wires":[]},
+  {"id":"out-200-json","type":"http response","z":"tab-coach-playbooks","name":"200 OK (JSON)","statusCode":"200","headers":{},"x":1670,"y":140,"wires":[]},
+  {"id":"dbg-playbook","type":"debug","z":"tab-coach-playbooks","name":"Playbook req","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","x":1710,"y":40,"wires":[]},
+  {"id":"dbg-ha-playbook","type":"debug","z":"tab-coach-playbooks","name":"HA resp (playbook)","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","x":1490,"y":40,"wires":[]}
 ]
