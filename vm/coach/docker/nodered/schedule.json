@@ -1,0 +1,11 @@
+[
+  {"id":"tab-coach-schedule","type":"tab","label":"Coach Schedule","disabled":false,"info":"Non-invasive schedule that calls existing playbook endpoints."},
+
+  {"id":"inj-morning","type":"inject","z":"tab-coach-schedule","name":"07:30 daily","props":[{"p":"payload"}],"repeat":"","crontab":"30 7 * * *","once":false,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":120,"y":80,"wires":[["http-morning"]]},
+  {"id":"http-morning","type":"http request","z":"tab-coach-schedule","name":"GET /playbook/morning_boot","method":"GET","ret":"txt","paytoqs":"ignore","url":"http://nodered:1880/playbook/morning_boot","tls":"","persist":false,"proxy":"","authType":"","senderr":false,"x":360,"y":80,"wires":[["dbg-morning"]]},
+  {"id":"dbg-morning","type":"debug","z":"tab-coach-schedule","name":"Morning resp","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","x":600,"y":80,"wires":[]},
+
+  {"id":"inj-bed","type":"inject","z":"tab-coach-schedule","name":"21:15 daily","props":[{"p":"payload"}],"repeat":"","crontab":"15 21 * * *","once":false,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":120,"y":140,"wires":[["http-bed"]]},
+  {"id":"http-bed","type":"http request","z":"tab-coach-schedule","name":"GET /playbook/bedtime_winddown","method":"GET","ret":"txt","paytoqs":"ignore","url":"http://nodered:1880/playbook/bedtime_winddown","tls":"","persist":false,"proxy":"","authType":"","senderr":false,"x":380,"y":140,"wires":[["dbg-bed"]]},
+  {"id":"dbg-bed","type":"debug","z":"tab-coach-schedule","name":"Bedtime resp","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","targetType":"full","x":600,"y":140,"wires":[]}
+]
