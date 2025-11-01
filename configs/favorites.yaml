@@ -1,0 +1,15 @@
+- id: evenbar_choc_coconut
+  name: "EvenBar – Chocolate Coconut Fiber Protein Bar"
+  brand: "Homemade"
+  serving:
+    quantity: 1
+    unit: "bar"
+    grams: 55
+  macros:
+    kcal: 165
+    protein_g: 9
+    carb_g: 5
+    fiber_g: 7
+    fat_g: 9
+  tags: ["quick", "snack", "low-carb", "homemade"]
+  recipe_ref: "https://www.notion.so/Living-Brief-29e0f664e7d880a485ced774f7b5b89d"
