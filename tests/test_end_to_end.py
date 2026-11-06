@@ -5,6 +5,13 @@ import requests
 import pytest
 from urllib.parse import urlsplit
 
+# These tests can emit real notifications, including GET playbook/button routes.
+# Ordinary development must opt in explicitly after selecting a controlled target.
+pytestmark = pytest.mark.skipif(
+    os.getenv("COACH_RUN_NETWORK_TESTS") != "1",
+    reason="Network/notification tests require explicit COACH_RUN_NETWORK_TESTS=1",
+)
+
 HA_BASE = os.getenv("HA_BASE", "http://homeassistant:8123")
 NR_BASE = os.getenv("NR_BASE", "http://localhost:1880")
 HA_TOKEN = os.getenv("HA_TOKEN", "")
