@@ -1,14 +1,24 @@
-# Coach Stack (Design Docs Only) — v0.1.0
+# Coach — v0.2.0 review increment
 
-This repository contains **design documents and configuration templates** for your private, on-device coaching system.
-It is intended to live at `/mnt/nas_storage/repos/coach/` and be kept **separate** from other projects.
-Your normal flow: download this bundle → save it to `/mnt/nas_storage/incoming/` → extract into `/mnt/nas_storage/repos/coach/`.
+Coach contains interaction code, Node-RED/Home Assistant flows, rules, planning
+clients and design/configuration documents. The running deployment and its local
+changes have not been verified by this review release.
 
-**Scope of this bundle (no code yet):**
-- Requirements and finalized architecture/design draft
-- VM deployment plan (pros/cons, suggestions)
-- File layout, ops guidance, change control
-- Configuration templates (YAML) for profiles, playbooks, nutrition, study deck
+PF-001 adds a source-aware offline physiology replay viewer using the shared
+Mother contract 1.0.0, corrects malformed flow files, preserves CGM identity/time
+in a disabled candidate-preview flow, and gates notification-capable tests.
+Recommendations, acknowledgments, performed actions and outcomes remain separate.
+The scalar viewer preserves explicit gaps and unknowns; it does not diagnose
+baseline departures or infer ECG/RR from heart rate.
 
-> LLMs and Postgres stay at the **system level** as per your design. The VM will host all other layers.
+See [physiology integration](docs/physiology/README.md) for exact scope, rendering
+commands and compatibility. The paired release bundle contains INSTALL/VERIFY,
+patches, a pinned revision manifest, the dependency-aware task board, source
+capability inventory and design decisions still requiring evidence. Install into
+new review worktrees before reconciling the actual deployed flow export.
+
+The documented `/mnt/nas_storage/repos/coach/` and incoming-bundle paths remain
+deployment references, not evidence of the current host layout. Existing design
+documents describe the VM and system-level LLM/PostgreSQL division; this increment
+does not choose or change those deployment boundaries.
 
