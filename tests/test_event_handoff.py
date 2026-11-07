@@ -123,6 +123,21 @@ class HandoffTests(unittest.TestCase):
         self.assertTrue(payload.endswith(b"\n"))
         self.assertLess(len(payload), 400 * 1024)
 
+    def test_world_readable_existing_destination_rejected(self):
+        if os.name != "posix":
+            self.skipTest("POSIX permission enforcement only")
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            payload = pack_manual_event(marker())
+            name = hashlib.sha256(payload).hexdigest() + ".coach-event.json"
+            file = base / name
+            file.write_bytes(payload)
+            file.chmod(0o644)
+            with self.assertRaises(HandoffError):
+                save_to_outbox(base, payload)
+            self.assertEqual(file.read_bytes(), payload)
+
+
 
 if __name__ == "__main__":
     unittest.main()
