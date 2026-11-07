@@ -1,0 +1,29 @@
+name: I01 Coach event handoff (offline)
+
+on:
+  pull_request:
+    paths:
+      - 'coach_app/physiology/handoff.py'
+      - 'tests/test_event_handoff.py'
+      - '.github/workflows/i01-event-handoff.yml'
+  push:
+    branches:
+      - 'work/i01-offline-event-transport'
+    paths:
+      - 'coach_app/physiology/handoff.py'
+      - 'tests/test_event_handoff.py'
+      - '.github/workflows/i01-event-handoff.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate offline envelope and outbox with zero network actions
+        run: python -m unittest discover -s tests -p test_event_handoff.py -v
