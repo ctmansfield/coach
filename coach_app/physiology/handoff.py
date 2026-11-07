@@ -95,7 +95,11 @@ def save_to_outbox(directory: str | Path, envelope: bytes) -> Path:
             os.link(temporary_path, destination)
         except FileExistsError:
             info = destination.lstat()
-            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or info.st_nlink != 1
+                or info.st_mode & 0o077
+            ):
                 raise HandoffError("Destination is not a private regular file")
             if destination.read_bytes() != envelope:
                 raise HandoffError("Existing envelope bytes do not match")
