@@ -1,0 +1,27 @@
+name: Coach offline manual capture
+on:
+  pull_request:
+    paths:
+      - 'coach_app/physiology/capture_ui.js'
+      - 'coach_app/physiology/manual_capture.html'
+      - 'tests/test_capture_ui.cjs'
+      - '.github/workflows/i01-manual-capture.yml'
+  push:
+    branches:
+      - 'work/i01-offline-manual-capture-ui'
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify offline capture and transport shape
+        run: node --test tests/test_capture_ui.cjs
+      - name: Syntax check
+        run: node --check coach_app/physiology/capture_ui.js
