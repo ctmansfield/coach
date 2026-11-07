@@ -21,11 +21,13 @@ KINDS = {
     "reported_action",
     "outcome",
 }
-REFERENCE_TYPES = {
+ALLOWED_PARENTS = {
     "answer": {"question"},
     "acknowledgment": {"recommendation"},
+    "reported_action": {"recommendation", "acknowledgment"},
     "outcome": {"reported_action", "observed_action"},
 }
+REQUIRED_PARENT = {"answer", "acknowledgment", "outcome"}
 
 
 class ManualEventError(ValueError):
@@ -84,8 +86,8 @@ def create_manual_event(
     if end is not None and end < start:
         raise ManualEventError("An event cannot end before it begins")
 
-    required = REFERENCE_TYPES.get(event_kind)
-    if required is not None and reference_event is None:
+    allowed = ALLOWED_PARENTS.get(event_kind)
+    if event_kind in REQUIRED_PARENT and reference_event is None:
         raise ManualEventError("A typed parent event is required")
     related_ids = []
     if reference_event is not None:
@@ -95,15 +97,12 @@ def create_manual_event(
             raise ManualEventError("Reference is not an event")
         if reference_event.get("subject_id") != subject_id:
             raise ManualEventError("Cross-subject event linkage is forbidden")
-        if required is not None and reference_event.get("event_kind") not in required:
+        if allowed is None or reference_event.get("event_kind") not in allowed:
             raise ManualEventError("The parent event has an incompatible kind")
         ref_id = reference_event.get("id")
         if not isinstance(ref_id, str) or not ref_id:
             raise ManualEventError("Parent event identity is missing")
         related_ids.append(ref_id)
-    if event_kind in {"user_marker", "context"} and reference_event is not None:
-        raise ManualEventError("Standalone context and marker drafts do not take a parent")
-
     # Manual action is a reported fact, never a sensor-observed action.
     # No automatic prompts, recommendations or interventions are created.
     return {
