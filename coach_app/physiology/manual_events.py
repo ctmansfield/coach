@@ -75,7 +75,7 @@ def create_manual_event(
         raise ManualEventError("Event identity is invalid")
     if session_id is not None and (not isinstance(session_id, str) or not session_id):
         raise ManualEventError("Invalid optional session reference")
-    recorded = _timestamp(recorded_at)
+    _timestamp(recorded_at)
     start = _timestamp(occurrence_start, optional=True)
     end = _timestamp(occurrence_end, optional=True)
     _timestamp(known_at, optional=True)
