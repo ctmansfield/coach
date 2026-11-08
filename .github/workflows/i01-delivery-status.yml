@@ -1,0 +1,47 @@
+name: I01 Coach delivery-state viewer (offline)
+
+on:
+  pull_request:
+    paths:
+      - 'coach_app/physiology/delivery_status.js'
+      - 'coach_app/physiology/delivery_status.html'
+      - 'tests/test_delivery_status.cjs'
+      - 'tests/test_delivery_status_browser.py'
+      - '.github/workflows/i01-delivery-status.yml'
+  push:
+    branches:
+      - 'work/i01-delivery-status-view'
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pure offline status and forged-report tests
+        run: node --test tests/test_delivery_status.cjs
+      - name: Check JS syntax
+        run: node --check coach_app/physiology/delivery_status.js
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned Playwright and compatible Chromium
+        run: |
+          python -m pip install 'playwright==1.55.0'
+          python -m playwright install --with-deps chromium
+      - name: Run actual file-URL browser scenarios
+        run: python -m unittest discover -s tests -p test_delivery_status_browser.py -v
