@@ -1,0 +1,43 @@
+name: Coach capture browser QA (offline)
+
+on:
+  pull_request:
+    paths:
+      - 'tests/test_capture_browser.py'
+      - '.github/workflows/i01-capture-browser-qa.yml'
+      - 'coach_app/physiology/manual_capture.html'
+      - 'coach_app/physiology/capture_ui.js'
+  push:
+    branches:
+      - 'work/i01-capture-browser-qa'
+
+permissions:
+  contents: read
+
+jobs:
+  browser-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned Playwright with Chromium
+        run: |
+          python -m pip install 'playwright==1.55.0'
+          python -m playwright install --with-deps chromium
+      - name: Test real offline form, keyboard, layout and downloads
+        env:
+          CAPTURE_BROWSER_EVIDENCE: ${{ github.workspace }}/qa-artifacts
+        run: python -m unittest discover -s tests -p test_capture_browser.py -v
+      - name: Attach synthetic browser screenshots for visual inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coach-i01-browser-synthetic-screenshots
+          path: qa-artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
