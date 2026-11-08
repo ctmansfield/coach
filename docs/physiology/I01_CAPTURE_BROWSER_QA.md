@@ -62,3 +62,38 @@ authenticated identity/transport design cannot be replaced by this test.
 Review the screenshot artifact and CI logs. Keep the PR in draft until
 independent usability, acceptance checks and release dependencies are
 reconciled. No deployment to NAS, merger into main, or credentials change.
+
+## Executed browser verification (8 November 2026)
+
+**Independent browser gate: PASS, source/synthetic browser evidence only.**
+
+- Verified head before documentation update:
+  `78c15fccfbf83df5d33df8d29549cd7a02efd10e`.
+- [GitHub Actions real Chromium run](https://github.com/ctmansfield/coach/actions/runs/42446663212):
+  **7 tests passed, 0 failures**, Python 3.11, Playwright 1.55.0,
+  Ubuntu 24.04, with pinned Chromium and no live application services.
+- [Synthetic desktop and mobile screenshots](https://github.com/ctmansfield/coach/actions/runs/42446663212/artifacts/13603658618)
+  were uploaded for independent visual review.
+- Manual screenshot inspection: labels, field spacing and warnings are
+  readable on 1365px desktop and 390px mobile; no horizontal clipping was
+  observed in either screenshot. This does not establish screen-reader
+  compatibility or color-contrast conformance.
+- Actual Chromium download parsed successfully, and the original event
+  bytes, envelope SHA-256, filename digest, unknown knowledge time,
+  reported epistemic state and explicit timestamp offset matched
+  expectations. No external HTTP requests were observed.
+
+**Resolved test/infrastructure failures:** The first run stopped before
+tests because Playwright 1.55 did not support the runner's Ubuntu 26.04
+browser installation. The workflow now uses Ubuntu 24.04. The first
+actual browser attempt then passed four tests but exposed three ambiguous
+test locators (the accessible name "Event type" was also a substring of
+"Earlier event type"). These locators were made exact; seven tests passed
+on the final focused run. The product code was not changed to hide those
+test problems.
+
+**Still open:** A human can review the browser in other operating systems
+and assistive technologies. A completed browser download does *not*
+establish archival receipt. Authenticated sender identity, local file
+retention policy, actual NAS installation, any device integration, and
+live delivery remain outside this gate. No private source data was used.
