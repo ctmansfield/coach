@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.2.2 review — 2026-11-08 — I01-U2 browser qualification
+
+- Added Playwright 1.55.0 real Chromium acceptance for the standalone
+  Coach manual event capture form, including keyboard tab order, accessible
+  labels, dynamic parent requirements, invalid calendar feedback,
+  no-external-request behavior and actual downloadable envelope integrity.
+- Executed **7/7 browser tests** successfully on pinned Ubuntu 24.04.
+  Synthetic desktop/mobile screenshots were independently inspected for
+  overflow and basic readability; no horizontal clipping was observed.
+- Resolved unsupported-runner and ambiguous-test-selector problems without
+  changing deployed behavior. No NAS service or production data was touched.
+- Full screen-reader, other-browser, end-user UX and authenticated delivery
+  acceptance remain separate open gates. The UI still only exports a file;
+  Mother archival receipt is not implied.
+
 ## v0.2.1 review — 2026-11-07 — I01-U offline capture
 
 - Added an offline manual factual-event form that creates versioned Coach
