@@ -148,7 +148,7 @@ class CaptureBrowserAcceptance(unittest.TestCase):
         self.assertTrue(self.page.get_by_label("Earlier event type").is_visible())
         self.assertTrue(self.page.get_by_label("Earlier event ID").get_attribute("required") is not None)
         self.assertTrue(self.page.get_by_label("Earlier event type").get_attribute("required") is not None)
-        self.page.get_by_label("Factual description").fill("Reported zero change, no measured outcome")
+        self.page.locator("#text").fill("Reported zero change, no measured outcome")
         self.page.get_by_role("button", name="Export offline event file").click()
         self.assertFalse(
             self.page.locator("form").evaluate("(form) => form.checkValidity()")
