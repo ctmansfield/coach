@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.2.3 review — 2026-11-09 — I01-S offline delivery status
+
+- Added a read-only standalone Coach status viewer for prepared events,
+  delivery attempts with unknown outcome, and Mother-reported archive
+  states with valid/missing/invalid receipt or immutable conflict.
+- The viewer SHA-256 checks the selected original envelope and ensures
+  a copied report matches the envelope and event ID, but never treats
+  a copied JSON report as sender authentication or permission to
+  delete the original event.
+- Dedicated acceptance passed 13 pure Node tests and 5 real Chromium
+  file:// tests with synthetic data, no browser storage or network access.
+- Mother independently passed 5 actual Mother-report→Coach JavaScript
+  contract tests plus read-only state and receipt-recovery regressions.
+- No live transport, NAS deployment, credential change, or personal
+  data inspection is implied; trusted status transport remains open.
+
 ## v0.2.2 review — 2026-11-08 — I01-U2 browser qualification
 
 - Added Playwright 1.55.0 real Chromium acceptance for the standalone
