@@ -125,7 +125,7 @@ class CaptureBrowserAcceptance(unittest.TestCase):
             "text",
         )
         self.assertTrue(self.page.get_by_label("Subject identifier").is_visible())
-        self.assertTrue(self.page.get_by_label("Event type").is_visible())
+        self.assertTrue(self.page.get_by_label("Event type", exact=True).is_visible())
 
     def test_real_browser_download_is_integrity_checked_and_offline(self):
         self.fill_marker()
@@ -143,7 +143,7 @@ class CaptureBrowserAcceptance(unittest.TestCase):
 
     def test_required_parent_blocks_export_until_reference_is_supplied(self):
         self.page.get_by_label("Subject identifier").fill(SUBJECT)
-        self.page.get_by_label("Event type").select_option("outcome")
+        self.page.get_by_label("Event type", exact=True).select_option("outcome")
         self.assertTrue(self.page.get_by_label("Earlier event ID").is_visible())
         self.assertTrue(self.page.get_by_label("Earlier event type").is_visible())
         self.assertTrue(self.page.get_by_label("Earlier event ID").get_attribute("required") is not None)
@@ -164,10 +164,10 @@ class CaptureBrowserAcceptance(unittest.TestCase):
         self.assertEqual(original["epistemic_type"], "reported")
 
     def test_switching_from_linked_event_to_marker_clears_parent(self):
-        self.page.get_by_label("Event type").select_option("answer")
+        self.page.get_by_label("Event type", exact=True).select_option("answer")
         self.page.get_by_label("Earlier event type").select_option("question")
         self.page.get_by_label("Earlier event ID").fill("question:old")
-        self.page.get_by_label("Event type").select_option("user_marker")
+        self.page.get_by_label("Event type", exact=True).select_option("user_marker")
         self.assertTrue(self.page.locator("#parent-fields").is_hidden())
         self.assertEqual(self.page.locator("#parent_id").input_value(), "")
         self.assertFalse(self.page.locator("#parent_id").evaluate("(el) => el.required"))
