@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 import unittest
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 PAGE = (
     Path(__file__).resolve().parents[1]
@@ -124,22 +124,18 @@ class DeliveryStatusBrowserQA(unittest.TestCase):
     def test_prepared_and_attempted_unknown_are_separate(self):
         self.put_packet()
         self.page.get_by_role("button", name="Review local delivery evidence").click()
-        self.assertIn("Prepared", self.page.locator("#state-title").inner_text())
+        expect(self.page.locator("#state-title")).to_contain_text("Prepared")
         self.page.get_by_label("I attempted to transfer this event").check()
         self.page.get_by_role("button", name="Review local delivery evidence").click()
-        self.assertIn("Delivery unknown", self.page.locator("#state-title").inner_text())
-        self.assertIn("Keep the original envelope", self.page.locator("#state-warning").inner_text())
+        expect(self.page.locator("#state-title")).to_contain_text("Delivery unknown")
+        expect(self.page.locator("#state-warning")).to_contain_text("Keep the original envelope")
 
     def test_copied_report_is_never_authenticated(self):
         packet = self.put_packet()
         self.put_report(packet, "archive_verified_receipt_valid")
         self.page.get_by_role("button", name="Review local delivery evidence").click()
-        self.assertIn(
-            "match reported", self.page.locator("#state-title").inner_text()
-        )
-        self.assertIn(
-            "cannot authenticate", self.page.locator("#state-warning").inner_text()
-        )
+        expect(self.page.locator("#state-title")).to_contain_text("match reported")
+        expect(self.page.locator("#state-warning")).to_contain_text("cannot authenticate")
 
     def test_forged_digest_refuses_to_render_archived_state(self):
         packet = self.put_packet()
@@ -148,7 +144,7 @@ class DeliveryStatusBrowserQA(unittest.TestCase):
             {"envelope_sha256": "f" * 64},
         )
         self.page.get_by_role("button", name="Review local delivery evidence").click()
-        self.assertIn("Verification unavailable", self.page.locator("#state-title").inner_text())
+        expect(self.page.locator("#state-title")).to_contain_text("Verification unavailable")
         self.assertIn("Keep the original envelope", self.page.locator("#state-warning").inner_text())
 
     def test_no_storage_and_reload_discards_files(self):
