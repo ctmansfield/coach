@@ -1,0 +1,12 @@
+{
+  "control_url": "https://github.com/ctmansfield/coach/issues",
+  "policy": {
+    "freshness": "unverified",
+    "url": "https://github.com/ctmansfield/coach/blob/main/.codex/WORKFLOW.md",
+    "version": "context-v1"
+  },
+  "project": "coach",
+  "repository": "ctmansfield/coach",
+  "schema": "context-project",
+  "version": 1
+}

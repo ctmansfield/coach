@@ -21,3 +21,12 @@ git branch -M main
 git remote add origin git@github.com:ctmansfield/coach.git
 git push -u origin main
 ```
+
+## Context reader tooling — v0.1.1
+
+Obtain the reviewed adoption commit through the normal repository update flow.
+From the repository root, run `python3 tools/context_project.py --root context resume`.
+The committed profile is initialized and starts UNSEEDED; use `.codex/READER.md`
+when initializing a separate project. Review `.codex/hooks.json` through the
+supported host's normal hook trust process. Old worktrees and conversations need
+the explicit intake/update described in `.codex/RESUME.md`.

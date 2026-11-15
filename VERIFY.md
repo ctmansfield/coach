@@ -18,3 +18,11 @@ Operational
 Expectations
 - Synthetic CGM inject produces a HA mobile notification
 - HTTP POST /events for TIMEBOX_END and MEAL_MISSED produces appropriate notifications
+
+## Context reader tooling — v0.1.1
+
+Run `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_context*.py'`.
+Then run `python3 tools/context_project.py --root context resume` and confirm the
+Coach repository identity, its own policy/control locators, an empty task list,
+and UNSEEDED status. These checks cover offline reader tooling. Verify an actual
+SessionStart callback separately before claiming automatic resume coverage.
