@@ -17,3 +17,11 @@
 - Rules Engine skeleton plan
 - Nightscout/xDrip placeholder
 - Hardening (compose/networking, secrets) deferred per decision
+
+## v0.1.1 — 2026-11-15: context reader adoption
+
+Install the shared context reader bundle 1.0.0 and context-v1 ordered intake,
+with project-local policy, an empty task index, synthetic tests, and a read-only
+SessionStart reminder adapter. See `.codex/WORKFLOW.md` for intake and handoff.
+This is repository tooling release accounting; no application deployment or
+target hook callback is asserted by this entry. No release tag is created.
