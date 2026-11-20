@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'none'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Coach | Factual event capture (offline)</title>
+<style>
+:root {color-scheme:light;--ink:#19354a;--muted:#526979;--accent:#126886;--line:#d5e1e8;--bg:#eef4f7;--paper:#ffffff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+header{background:#173e51;color:white;padding:30px max(20px,calc((100vw - 920px)/2))}
+header small{display:block;letter-spacing:.16em;text-transform:uppercase;opacity:.76;font-weight:700}
+header h1{font-size:clamp(1.55rem,4vw,2.35rem);margin:.2em 0 .35em}
+header p{max-width:740px;color:#d5eaf1;margin:0}
+main{max-width:960px;margin:auto;padding:24px 20px 60px}
+.notice{border-left:4px solid #247a8f;background:#e1f1f3;padding:14px 18px;border-radius:8px;margin-bottom:20px}
+form{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 5px 28px rgba(26,61,76,.07);padding:clamp(20px,4vw,34px)}
+h2{font-size:1.18rem;margin:0 0 10px}
+.section{padding-bottom:24px;margin-bottom:24px;border-bottom:1px solid var(--line)}
+.section:last-of-type{border:0;margin:0;padding:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+label{font-weight:650}
+input,select,textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid #aebfca;border-radius:8px;color:#19354a;background:#fff}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #73b9d2;outline-offset:1px}
+textarea{min-height:110px;resize:vertical}
+small.help{font-size:.85rem;color:var(--muted);display:block}
+button{cursor:pointer;font:inherit;font-weight:700;border-radius:8px;padding:12px 22px;border:0;background:#126886;color:#fff}
+button:disabled{opacity:.55;cursor:wait}
+#parent-fields[hidden]{display:none}
+#capture-status{min-height:2em;margin:12px 0 0;font-weight:600}
+.footnote{color:var(--muted);font-size:.88rem}
+@media(max-width:650px){.grid{grid-template-columns:1fr}header{padding:24px 20px}main{padding:16px 12px 40px}form{padding:18px}}
+</style>
+<script src="capture_ui.js" defer></script>
+</head>
+<body>
+<header>
+  <small>Coach · Evidence tools</small>
+  <h1>Manual factual event</h1>
+  <p>Record what happened, when you know it happened, and what remains unknown. This page works offline and does not contact Mother or send notifications.</p>
+</header>
+<main>
+  <aside class="notice" aria-label="Important limitation">
+    <strong>Offline draft only.</strong> Export creates a local file for later verified import into Mother. It is not saved to the physiology archive, authenticated, or interpreted as a clinical outcome.
+  </aside>
+  <form id="capture-form" autocomplete="off">
+    <section class="section">
+      <h2>1 · What are you recording?</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="subject_id">Subject identifier</label>
+          <input id="subject_id" name="subject_id" required maxlength="256" placeholder="Your established archive subject ID">
+          <small class="help">Use the existing archive identifier, not a new identifying name. Not stored by this page.</small>
+        </div>
+        <div class="field">
+          <label for="event_kind">Event type</label>
+          <select id="event_kind" name="event_kind">
+            <option value="user_marker">Personal event marker</option>
+            <option value="context">Factual context</option>
+            <option value="answer">Answer to an earlier question</option>
+            <option value="acknowledgment">Acknowledgment (not an action)</option>
+            <option value="reported_action">Action actually performed</option>
+            <option value="outcome">Reported subsequent outcome</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label id="description-label" for="text">Factual description</label>
+        <textarea id="text" name="text" required maxlength="4000" placeholder="Describe an observation or action without assigning a readiness score"></textarea>
+        <small class="help">Use specific facts. The text is preserved as a reported statement, not a measurement or medical interpretation.</small>
+      </div>
+    </section>
+    <section class="section">
+      <h2>2 · Timing and context</h2>
+      <p class="footnote">The recorded-at time is captured automatically when you export. Leave an optional time blank if unknown. Times entered here require an explicit UTC offset.</p>
+      <div class="grid">
+        <div class="field">
+          <label for="occurrence_start">Event start (optional)</label>
+          <input id="occurrence_start" name="occurrence_start" type="text" inputmode="text" placeholder="2026-11-07T14:05:00+10:00">
+        </div>
+        <div class="field">
+          <label for="occurrence_end">Event end (optional)</label>
+          <input id="occurrence_end" name="occurrence_end" type="text" placeholder="2026-11-07T14:20:00+10:00">
+        </div>
+        <div class="field">
+          <label for="known_at">Known to you at (optional)</label>
+          <input id="known_at" name="known_at" type="text" placeholder="2026-11-07T14:07:00+10:00">
+        </div>
+        <div class="field">
+          <label for="session_id">Linked recording session ID (optional)</label>
+          <input id="session_id" name="session_id" maxlength="256" type="text" placeholder="Existing session ID">
+        </div>
+      </div>
+    </section>
+    <section class="section" id="parent-fields" hidden>
+      <h2>3 · Link to a previously recorded event</h2>
+      <p class="footnote">This link must resolve to an existing Mother event during import. Acknowledgment never proves that an action occurred.</p>
+      <div class="grid">
+        <div class="field">
+          <label for="parent_kind">Earlier event type</label>
+          <select id="parent_kind" name="parent_kind"></select>
+        </div>
+        <div class="field">
+          <label for="parent_id">Earlier event ID</label>
+          <input id="parent_id" name="parent_id" maxlength="256" placeholder="Previously archived event ID">
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <h2>Export</h2>
+      <p class="footnote">This browser creates a SHA-256-checked Coach event envelope and starts a local download. The downloaded file can contain sensitive information. Keep it private; do not put it in a public repository.</p>
+      <button type="submit">Export offline event file</button>
+      <p id="capture-status" role="status" aria-live="polite"></p>
+    </section>
+  </form>
+  <p class="footnote">No background syncing, analytics, readiness scoring, browser storage, or intervention control is enabled. The event is not an archived record until Mother separately validates and accepts it.</p>
+</main>
+</body>
+</html>
