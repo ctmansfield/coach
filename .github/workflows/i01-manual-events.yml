@@ -1,0 +1,29 @@
+name: I01 manual event drafts (offline)
+
+on:
+  pull_request:
+    paths:
+      - 'coach_app/physiology/manual_events.py'
+      - 'tests/test_manual_events.py'
+      - '.github/workflows/i01-manual-events.yml'
+  push:
+    branches:
+      - 'work/i01-manual-event-drafts'
+    paths:
+      - 'coach_app/physiology/manual_events.py'
+      - 'tests/test_manual_events.py'
+      - '.github/workflows/i01-manual-events.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  isolated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run manual-event tests without network or notifications
+        run: python -m unittest discover -s tests -p test_manual_events.py -v
