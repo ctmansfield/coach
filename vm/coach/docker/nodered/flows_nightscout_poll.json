@@ -1,22 +1,123 @@
 [
-  {"id":"tab2","type":"tab","label":"Nightscout Poll","disabled":false,"info":"Poll Nightscout every 1m and forward CGM events to /events logic."},
-  {"id":"inj1","type":"inject","z":"tab2","name":"Every 1 min","props":[{"p":"payload"},{"p":"topic","vt":"str"}],"repeat":"60","crontab":"","once":true,"onceDelay":0.1,"topic":"","payload":"","payloadType":"date","x":130,"y":80,"wires":[["http_ns"]]},
-  {"id":"http_ns","type":"http request","z":"tab2","name":"GET latest entry","method":"GET","ret":"obj","paytoqs":"ignore","url":"http://nightscout:1337/api/v1/entries.json?count=1","persist":false,"authType":"","senderr":false,"x":330,"y":80,"wires":[["fn_map"]]},
-  {"id":"fn_map","type":"function","z":"tab2","name":"Map to CGM event","func":"var entries = msg.payload || [];
-if (!Array.isArray(entries) || entries.length === 0) return null;
-var e = entries[0];
-var sgv = Number(e.sgv||0);
-var dir = (e.direction||'').toLowerCase();
-var trend = 'flat';
-if (dir.includes('up')) trend = 'rising';
-if (dir.includes('down')) trend = 'falling';
-
-var ev = { type: 'CGM_SPIKE', glucose: sgv, trend: trend };
-msg.headers = { 'Content-Type': 'application/json' };
-msg.method = 'POST';
-msg.url = 'http://nodered:1880/events';
-msg.payload = ev;
-return msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":540,"y":80,"wires":[["http_post_evt"]]},
-  {"id":"http_post_evt","type":"http request","z":"tab2","name":"POST /events","method":"use","ret":"txt","paytoqs":"ignore","url":"","tls":"","persist":false,"proxy":"","authType":"","senderr":false,"x":760,"y":80,"wires":[["dbg"]]},
-  {"id":"dbg","type":"debug","z":"tab2","name":"Event -> 200?","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"statusCode","targetType":"msg","statusVal":"","statusType":"auto","x":960,"y":80,"wires":[]}
+  {
+    "id": "tab2",
+    "type": "tab",
+    "label": "Nightscout Legacy Preview (disabled)",
+    "disabled": true,
+    "info": "Optional latest-only preview; disabled by default. Mother owns durable acquisition and catch-up. This flow emits raw observation candidates to an unconnected link and never calls notification /events. No history, persistence, or restart guarantees."
+  },
+  {
+    "id": "inj1",
+    "type": "inject",
+    "z": "tab2",
+    "name": "Latest preview every 1 min",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "60",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 80,
+    "wires": [
+      [
+        "fn_enable_poll"
+      ]
+    ]
+  },
+  {
+    "id": "fn_enable_poll",
+    "type": "function",
+    "z": "tab2",
+    "name": "Explicit preview opt-in",
+    "func": "// Disabled preview: explicit opt-in and a named source are required before HTTP.\nif (env.get('COACH_ENABLE_LEGACY_NIGHTSCOUT_POLL') !== '1') {\n    node.status({fill: 'grey', shape: 'ring', text: 'legacy preview disabled'});\n    return null;\n}\nconst source = env.get('NIGHTSCOUT_SOURCE_INSTANCE');\nconst base = env.get('NIGHTSCOUT_URL');\nif (!source || !base || !/^https?:\\/\\//i.test(base)) {\n    node.status({fill: 'yellow', shape: 'ring', text: 'source instance and URL required'});\n    return null;\n}\nmsg.url = String(base).replace(/\\/+$/, '') + '/api/v1/entries/sgv.json?count=1';\nmsg.method = 'GET';\nreturn msg;\n",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 370,
+    "y": 80,
+    "wires": [
+      [
+        "http_ns"
+      ]
+    ]
+  },
+  {
+    "id": "http_ns",
+    "type": "http request",
+    "z": "tab2",
+    "name": "GET latest SGV only",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "persist": false,
+    "authType": "",
+    "senderr": false,
+    "x": 600,
+    "y": 80,
+    "wires": [
+      [
+        "fn_map"
+      ]
+    ]
+  },
+  {
+    "id": "fn_map",
+    "type": "function",
+    "z": "tab2",
+    "name": "Preserve raw observation candidate",
+    "func": "// Preview transport only. Mother owns durable source revisions and observations.\n// Outputs: [observation candidate, acquisition/dedup status]. Never notification events.\nconst source = env.get('NIGHTSCOUT_SOURCE_INSTANCE');\nconst now = new Date().toISOString();\nfunction status(code, record) {\n    node.status({fill: 'yellow', shape: 'ring', text: code});\n    return [null, {payload: {\n        transport_version: '1.0.0', type: 'observation_preview_status',\n        code: code, source_instance: source || null, observed_at: now,\n        native_record_id: record && record._id || null,\n        raw_record: record || null\n    }}];\n}\nif (env.get('COACH_ENABLE_LEGACY_NIGHTSCOUT_POLL') !== '1') return status('preview_disabled');\nif (!source) return status('missing_source_instance');\nif (msg.statusCode !== undefined && Number(msg.statusCode) !== 200) return status('http_failure');\nif (!Array.isArray(msg.payload)) return status('malformed_response');\nif (msg.payload.length === 0) return status('no_entry');\nif (msg.payload.length !== 1) return status('unexpected_result_count');\nconst e = msg.payload[0];\nif (!e || typeof e !== 'object' || Array.isArray(e)) return status('malformed_entry');\nif (typeof e._id !== 'string' || !e._id.trim()) return status('missing_native_id', e);\nif (e.type && e.type !== 'sgv') return status('unsupported_entry_type', e);\nif (e.sgv === null || e.sgv === undefined || typeof e.sgv === 'boolean' ||\n    !['number', 'string'].includes(typeof e.sgv) || String(e.sgv).trim() === '' ||\n    !Number.isFinite(Number(e.sgv))) return status('invalid_sgv', e);\nlet stamp;\nlet timeBasis;\nif (e.date !== null && e.date !== undefined) {\n    if (!['number', 'string'].includes(typeof e.date) || String(e.date).trim() === '' ||\n        !Number.isSafeInteger(Number(e.date))) return status('invalid_date_ms', e);\n    stamp = Number(e.date);\n    timeBasis = 'date_ms';\n} else {\n    if (typeof e.dateString !== 'string' || !/(Z|[+-]\\d{2}:?\\d{2})$/i.test(e.dateString)) {\n        return status('missing_or_ambiguous_measurement_time', e);\n    }\n    // Reject calendar rollover and unsupported precision instead of silently coercing it.\n    const parts = /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(\\.\\d{1,3})?(Z|[+-]\\d{2}:\\d{2})$/i.exec(e.dateString);\n    if (!parts) return status('invalid_dateString', e);\n    const year = Number(parts[1]);\n    const month = Number(parts[2]);\n    const day = Number(parts[3]);\n    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);\n    const monthDays = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];\n    const zone = parts[8];\n    if (month < 1 || month > 12 || day < 1 || day > monthDays[month - 1] ||\n        Number(parts[4]) > 23 || Number(parts[5]) > 59 || Number(parts[6]) > 59 ||\n        (zone.toUpperCase() !== 'Z' && (Number(zone.slice(1,3)) > 23 || Number(zone.slice(4)) > 59))) {\n        return status('invalid_dateString', e);\n    }\n    stamp = Date.parse(e.dateString);\n    timeBasis = 'dateString';\n}\nif (!Number.isFinite(stamp) || !Number.isFinite(new Date(stamp).getTime())) return status('invalid_measurement_time', e);\nfunction canonical(value) {\n    if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';\n    if (value && typeof value === 'object') {\n        return '{' + Object.keys(value).sort().map(k => JSON.stringify(k) + ':' + canonical(value[k])).join(',') + '}';\n    }\n    return JSON.stringify(value);\n}\nconst key = JSON.stringify([source, 'entries', e._id]);\nconst fingerprint = canonical(e);\nlet seen = flow.get('nightscoutLegacyPreviewRevisions') || [];\nif (!Array.isArray(seen)) seen = [];\nif (seen.some(item => item.key === key && item.fingerprint === fingerprint)) return status('duplicate_revision', e);\nconst revisionStatus = seen.some(item => item.key === key) ? 'changed' : 'first_observed';\nconst quality = [];\nconst configuredAge = Number(env.get('COACH_NIGHTSCOUT_PREVIEW_MAX_AGE_SECONDS'));\nconst maxAge = Number.isFinite(configuredAge) && configuredAge > 0 ? configuredAge : 900;\nconst ageSeconds = (Date.parse(now) - stamp) / 1000;\nif (ageSeconds > maxAge) quality.push('stale_preview');\nif (ageSeconds < 0) quality.push('measurement_time_after_system_observation');\nif (timeBasis === 'date_ms' && typeof e.dateString === 'string') {\n    const alternate = Date.parse(e.dateString);\n    if (Number.isFinite(alternate) && alternate !== stamp) quality.push('source_timestamps_differ');\n}\nseen.push({key: key, fingerprint: fingerprint, first_seen_at: now});\n// This bounded Node-RED context cache is not a durable-receipt checkpoint or an archive.\nflow.set('nightscoutLegacyPreviewRevisions', seen.slice(-1000));\nmsg.payload = {\n    transport_version: '1.0.0', type: 'CGM_OBSERVATION_CANDIDATE',\n    archival_status: 'not_persisted', source_instance: source,\n    source_collection: 'entries', native_record_id: e._id,\n    measurement_start: new Date(stamp).toISOString(),\n    native_measurement_time: {date: e.date === undefined ? null : e.date, dateString: e.dateString === undefined ? null : e.dateString},\n    measurement_time_basis: timeBasis, source_available_at: null,\n    first_seen_at: now, ingested_at: null, forwarded_at: now,\n    original_value: e.sgv, original_unit: e.units === undefined ? null : e.units,\n    value_status: 'valid', epistemic_type: 'measured', quality_flags: quality,\n    revision_status: revisionStatus, direction: e.direction || null,\n    provenance: {source: 'Nightscout', native_device: e.device || null, relay: 'Coach legacy preview'},\n    processing_version: 'coach-nightscout-preview/1.0.0', raw_record: e\n};\n// Deliberately no msg.url or notification route. Link output is unconnected by default.\ndelete msg.url;\ndelete msg.headers;\ndelete msg.method;\nnode.status({fill: quality.length ? 'yellow' : 'green', shape: 'dot', text: quality.length ? quality.join(', ') : 'unarchived observation preview'});\nreturn [msg, null];\n",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 880,
+    "y": 80,
+    "wires": [
+      [
+        "observation_preview_out"
+      ],
+      [
+        "preview_status"
+      ]
+    ]
+  },
+  {
+    "id": "observation_preview_out",
+    "type": "link out",
+    "z": "tab2",
+    "name": "Unarchived observation preview (no notification route)",
+    "mode": "link",
+    "links": [],
+    "x": 1115,
+    "y": 60,
+    "wires": []
+  },
+  {
+    "id": "preview_status",
+    "type": "debug",
+    "z": "tab2",
+    "name": "Preview acquisition/dedup status",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 1140,
+    "y": 120,
+    "wires": []
+  }
 ]
